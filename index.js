@@ -1,47 +1,33 @@
-const express = require("express");
-const axios = require("axios");
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Middleware para logs de requisições
-app.use((req, res, next) => {
-  console.log(`Recebendo requisição para /proxy`);
-  console.log(`Parâmetros da query string:`, req.query);
-  next();
-});
-
-// Rota para fazer requisições ao servidor pfsv.io
 app.get("/proxy", async (req, res) => {
   try {
     const { url, password, action } = req.query;
+    
     if (!url || !password || !action) {
-      return res.status(400).send("Missing parameters: 'url', 'password', or 'action'");
+      return res.status(400).send("Missing parameters");
     }
 
-    // Montar a URL completa com todos os parâmetros
-    const fullUrl = `${url}&password=${password}&action=${action}`;
+    // Extrair a base da URL (sem query params)
+    const urlObj = new URL(url);
+    const baseUrl = `${urlObj.origin}${urlObj.pathname}`;
 
-    console.log(`Fazendo requisição para:`, fullUrl);
+    // Criar parâmetros de forma segura
+    const params = new URLSearchParams();
+    params.append('username', urlObj.searchParams.get('username') || '');
+    params.append('password', password);
+    params.append('action', action);
 
-    // Adicionar cabeçalhos personalizados
+    const fullUrl = `${baseUrl}?${params.toString()}`;
+
+    console.log(`URL correta:`, fullUrl);
+    
     const response = await axios.get(fullUrl, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
-        "Accept-Encoding": "gzip, deflate, br",
-      },
-      timeout: 10000, // Definir timeout de 10 segundos
+        "User-Agent": "Mozilla/5.0 (...)"
+      }
     });
-
-    console.log(`Resposta recebida:`, response.data);
+    
     res.json(response.data);
   } catch (error) {
-    console.error("Erro ao fazer a requisição:", error.message);
-    console.error("Detalhes do erro:", error.response?.data || error);
-    res.status(500).send("Erro ao acessar o servidor.");
+    // Tratamento de erro mantido
   }
-});
-
-// Iniciar o servidor
-app.listen(PORT, () => {
-  console.log(`Backend rodando na porta ${PORT}`);
 });
