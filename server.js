@@ -1,6 +1,9 @@
 import express from 'express';
 import axios from 'axios';
-import { HttpProxyAgent } from 'http-proxy-agent';
+// --- CORREÇÃO AQUI ---
+import pkg from 'http-proxy-agent'; // Importa o módulo CommonJS como um objeto 'pkg'
+const { HttpProxyAgent } = pkg;     // Acessa a exportação 'HttpProxyAgent' dentro desse objeto
+// --- FIM CORREÇÃO ---
 import { URL } from 'url'; // Necessário para construir a URL do proxy
 
 const app = express();
@@ -31,6 +34,7 @@ try {
 
 
 // Cria o agente proxy que o axios usará
+// Aparentemente HttpProxyAgent pode ser instanciado diretamente com a URL string
 const proxyAgent = new HttpProxyAgent(authenticatedProxyUrl.toString());
 
 // Middleware para todas as requisições (GET, POST, etc.)
